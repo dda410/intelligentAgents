@@ -5,8 +5,14 @@ import genius.core.Bid;
 import genius.core.actions.Accept;
 import genius.core.actions.Action;
 import genius.core.actions.Offer;
+import genius.core.issue.Issue;
+import genius.core.issue.IssueDiscrete;
+import genius.core.issue.ValueDiscrete;
 import genius.core.parties.AbstractNegotiationParty;
 import genius.core.parties.NegotiationInfo;
+import genius.core.utility.AbstractUtilitySpace;
+import genius.core.utility.AdditiveUtilitySpace;
+import genius.core.utility.EvaluatorDiscrete;
 
 /**
  * ExampleAgent returns the bid that maximizes its own utility for half of the negotiation session.
@@ -22,7 +28,46 @@ public class ExampleAgent extends AbstractNegotiationParty {
     @Override
     public void init(NegotiationInfo info) {
         super.init(info);
+        AbstractUtilitySpace utilitySpace = info.getUtilitySpace();
 
+        AdditiveUtilitySpace additiveUtilitySpace = (AdditiveUtilitySpace) utilitySpace;
+
+        List<Issue> issues = additiveUtilitySpace.getDomain().getIssues();
+
+        for (Issue issue : issues) {
+            int issueNumber = issue.getNumber();
+            System.out.println(">> " + issue.getName() + " weight: " + additiveUtilitySpace.getWeight(issueNumber));
+
+            // Assuming that issues are discrete only
+            IssueDiscrete issueDiscrete = (IssueDiscrete) issue;
+            EvaluatorDiscrete evaluatorDiscrete = (EvaluatorDiscrete) additiveUtilitySpace.getEvaluator(issueNumber);
+
+            for (ValueDiscrete valueDiscrete : issueDiscrete.getValues()) {
+                System.out.println(valueDiscrete.getValue());
+                System.out.println("Evaluation(getValue): " + evaluatorDiscrete.getValue(valueDiscrete));
+                try {
+                    System.out.println("Evaluation(getEvaluation): " + evaluatorDiscrete.getEvaluation(valueDiscrete));
+                } catch(Exception e) {
+
+                }
+            }
+        }
+    }
+
+    public Bid generateRandomBidWithUtility(double utilityThreshold) {
+        Bid randomBid;
+        double utility;
+        do {
+            randomBid = generateRandomBid();
+            try {
+                utility = utilitySpace.getUtility(randomBid);
+            } catch (Exception e)
+            {
+                utility = 0.0;
+            }
+        }
+        while (utility < utilityThreshold);
+        return randomBid;
     }
 
     /**
@@ -43,9 +88,8 @@ public class ExampleAgent extends AbstractNegotiationParty {
 
         // First half of the negotiation offering the max utility (the best agreement possible) for Example Agent
         if (time < 0.5) {
-            return new Offer(this.getPartyId(), this.getMaxUtilityBid());
+            return new Offer(this.getPartyId(), this.getaxUtilityBid());
         } else {
-
             // Accepts the bid on the table in this phase,
             // if the utility of the bid is higher than Example Agent's last bid.
             if (lastReceivedOffer != null
@@ -55,8 +99,9 @@ public class ExampleAgent extends AbstractNegotiationParty {
                 return new Accept(this.getPartyId(), lastReceivedOffer);
             } else {
                 // Offering a random bid
-                myLastOffer = generateRandomBid();
-                return new Offer(this.getPartyId(), myLastOffer);
+                return new Offer(this.getPartyId(), this.generateRandomBidWithUtility((double) 1 - time));
+//                myLastOffer = generateRandomBid();
+//                return new Offer(this.getPartyId(), myLastOffer);
             }
         }
     }
@@ -67,8 +112,8 @@ public class ExampleAgent extends AbstractNegotiationParty {
      * @param act
      */
     @Override
-    public void receiveMessage(AgentID sender, Action act) {
-        super.receiveMessage(sender, act);
+    public void receiveessage(AgentID sender, Action act) {
+        super.receiveessage(sender, act);
 
         if (act instanceof Offer) { // sender is making an offer
             Offer offer = (Offer) act;
@@ -87,9 +132,9 @@ public class ExampleAgent extends AbstractNegotiationParty {
         return description;
     }
 
-    private Bid getMaxUtilityBid() {
+    private Bid getaxUtilityBid() {
         try {
-            return this.utilitySpace.getMaxUtilityBid();
+            return this.utilitySpace.getaxUtilityBid();
         } catch (Exception e) {
             e.printStackTrace();
         }
