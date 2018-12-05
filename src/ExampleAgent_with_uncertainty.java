@@ -4,6 +4,7 @@ import java.util.List;
 import genius.core.AgentID;
 import genius.core.Bid;
 import genius.core.BidHistory;
+import genius.core.Domain;
 import genius.core.actions.Accept;
 import genius.core.actions.Action;
 import genius.core.actions.Offer;
@@ -14,9 +15,11 @@ import genius.core.issue.Value;
 import genius.core.issue.ValueDiscrete;
 import genius.core.parties.AbstractNegotiationParty;
 import genius.core.parties.NegotiationInfo;
+import genius.core.uncertainty.AdditiveUtilitySpaceFactory;
 import genius.core.utility.AbstractUtilitySpace;
 import genius.core.utility.AdditiveUtilitySpace;
 import genius.core.utility.EvaluatorDiscrete;
+import genius.core.utility.UncertainAdditiveUtilitySpace;
 
 import java.util.HashMap;
 
@@ -38,14 +41,34 @@ public class ExampleAgent extends AbstractNegotiationParty {
         @Override
 	public void init(NegotiationInfo info) {
 	    super.init(info);
-	    AbstractUtilitySpace utilitySpace = info.getUtilitySpace();
-	    AdditiveUtilitySpace additiveUtilitySpace = (AdditiveUtilitySpace) utilitySpace;
+	    Domain domain = getDomain();
+	    AdditiveUtilitySpaceFactory factory = new AdditiveUtilitySpaceFactory(domain);
+	    factory.estimateUsingBidRanks(userModel.getBidRanking());
+	    System.out.println(factory.getUtilitySpace());
+	    //System.out.println(factory);
+	    System.exit(1);
+	    //AbstractUtilitySpace utilitySpace = info.getUtilitySpace();
+	    //AdditiveUtilitySpace additiveUtilitySpace = (AdditiveUtilitySpace) utilitySpace;
+	    //System.out.println("Additive utility space:");
+	    //System.out.println(additiveUtilitySpace.getDomain());
+	    //UncertainAdditiveUtilitySpace uncertainAdditiveUtilitySpace = (UncertainAdditiveUtilitySpace) utilitySpace;
+	    //System.out.println("Unc. Additive utility space:");
+	    //System.out.println(uncertainAdditiveUtilitySpace.getDomain());
 	    // If working with uncertainty
 	    bidOrder = userModel.getBidRanking().getBidOrder();
 	    System.out.println(bidOrder);
 	    System.out.println(bidOrder.size());
-	    //System.exit(1);
-	    List<Issue> issues = additiveUtilitySpace.getDomain().getIssues();
+	    //        List< Issue > issuesList = bidOrder.get(0).getIssues();
+	    //
+	    //        for (Issue issue : issuesList) {
+	    //            System.out.println(issue.getName() + ": " + bid.getValue(issue.getNumber()));
+	    //        }
+
+
+
+
+	    System.exit(1);
+	    //List<Issue> issues = additiveUtilitySpace.getDomain().getIssues();
 	    //        int totalPossibleBids = 1;
 	    //        for (Issue issue : issues) {
 	    //            System.out.println("Inside issue SDFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
