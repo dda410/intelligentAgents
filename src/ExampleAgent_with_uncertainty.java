@@ -46,7 +46,8 @@ public class ExampleAgent extends AbstractNegotiationParty {
 	    factory.estimateUsingBidRanks(userModel.getBidRanking());
 	    System.out.println(factory.getUtilitySpace());
 	    //System.out.println(factory);
-	    System.exit(1);
+	    AdditiveUtilitySpace additiveUtilitySpace = factory.getUtilitySpace();
+	    //System.exit(1);
 	    //AbstractUtilitySpace utilitySpace = info.getUtilitySpace();
 	    //AdditiveUtilitySpace additiveUtilitySpace = (AdditiveUtilitySpace) utilitySpace;
 	    //System.out.println("Additive utility space:");
@@ -67,36 +68,36 @@ public class ExampleAgent extends AbstractNegotiationParty {
 
 
 
-	    System.exit(1);
-	    //List<Issue> issues = additiveUtilitySpace.getDomain().getIssues();
-	    //        int totalPossibleBids = 1;
-	    //        for (Issue issue : issues) {
-	    //            System.out.println("Inside issue SDFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
-	    //            int issueNumber = issue.getNumber();
-	    //            //System.out.println(">> " + issue.getName() + " weight: " + additiveUtilitySpace.getWeight(issueNumber));
-	    //
-	    //            // Assuming that issues are discrete only
-	    //            IssueDiscrete issueDiscrete = (IssueDiscrete) issue;
-	    //            //EvaluatorDiscrete evaluatorDiscrete = (EvaluatorDiscrete) additiveUtilitySpace.getEvaluator(issueNumber);
-	    //            HashMap<String, Integer> valuesMap = new HashMap<String, Integer>();
-	    //            int noOfValues = 0;
-	    //            for (ValueDiscrete valueDiscrete : issueDiscrete.getValues()) {
-	    //                valuesMap.put(valueDiscrete.getValue(), 0);
-	    //                //System.out.println(valueDiscrete.getValue());
-	    //                //System.out.println("Evaluation(getValue): " + evaluatorDiscrete.getValue(valueDiscrete));
-	    //                try {
-	    //                    //System.out.println("Evaluation(getEvaluation): " + evaluatorDiscrete.getEvaluation(valueDiscrete));
-	    //                } catch(Exception e) {
-	    //                    //System.out.println("We have an exception");
-	    //                }
-	    //                noOfValues++;
-	    //            }
-	    //            totalPossibleBids *= noOfValues;
-	    //            //System.out.println(valuesMap);
-	    //            issuesMap.put(issue.getName(), valuesMap);
-	    //        }
-	    //        System.out.println("All the possible bids:");
-	    //        System.out.println(totalPossibleBids);
+	    //System.exit(1);
+	    List<Issue> issues = additiveUtilitySpace.getDomain().getIssues();
+	    int totalPossibleBids = 1;
+	    for (Issue issue : issues) {
+		System.out.println("Inside issue SDFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+		int issueNumber = issue.getNumber();
+		//System.out.println(">> " + issue.getName() + " weight: " + additiveUtilitySpace.getWeight(issueNumber));
+
+		// Assuming that issues are discrete only
+		IssueDiscrete issueDiscrete = (IssueDiscrete) issue;
+		//EvaluatorDiscrete evaluatorDiscrete = (EvaluatorDiscrete) additiveUtilitySpace.getEvaluator(issueNumber);
+		HashMap<String, Integer> valuesMap = new HashMap<String, Integer>();
+		int noOfValues = 0;
+		for (ValueDiscrete valueDiscrete : issueDiscrete.getValues()) {
+		    valuesMap.put(valueDiscrete.getValue(), 0);
+		    //System.out.println(valueDiscrete.getValue());
+		    //System.out.println("Evaluation(getValue): " + evaluatorDiscrete.getValue(valueDiscrete));
+		    try {
+			//System.out.println("Evaluation(getEvaluation): " + evaluatorDiscrete.getEvaluation(valueDiscrete));
+		    } catch(Exception e) {
+			//System.out.println("We have an exception");
+		    }
+		    noOfValues++;
+		}
+		totalPossibleBids *= noOfValues;
+		//System.out.println(valuesMap);
+		issuesMap.put(issue.getName(), valuesMap);
+	    }
+	    System.out.println("All the possible bids:");
+	    System.out.println(totalPossibleBids);
 	    System.out.println("THE COMPLETE ISSUE MAP");
 	    System.out.println(issuesMap);
 	}
