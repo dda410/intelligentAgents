@@ -3,9 +3,11 @@ import java.util.List;
 
 import genius.core.AgentID;
 import genius.core.Bid;
+import genius.core.BidHistory;
 import genius.core.actions.Accept;
 import genius.core.actions.Action;
 import genius.core.actions.Offer;
+import genius.core.bidding.BidDetails;
 import genius.core.issue.Issue;
 import genius.core.issue.IssueDiscrete;
 import genius.core.issue.Value;
@@ -30,6 +32,7 @@ public class ExampleAgent extends AbstractNegotiationParty {
     private Bid lastReceivedOffer; // offer on the table
     private Bid myLastOffer;
     private HashMap<String, HashMap> issuesMap = new HashMap<>();
+    private BidHistory bidHistory = new BidHistory();
 
         @Override
 	public void init(NegotiationInfo info) {
@@ -139,7 +142,7 @@ public class ExampleAgent extends AbstractNegotiationParty {
 
 		// storing last received offer
 		lastReceivedOffer = offer.getBid();
-
+		bidHistory.add(new BidDetails(lastReceivedOffer, 0));
 		//System.out.println("Received an offer with the following issues");
 		AdditiveUtilitySpace additiveUtilitySpace = (AdditiveUtilitySpace) utilitySpace;
 		List<Issue> issues = lastReceivedOffer.getIssues();
@@ -149,19 +152,10 @@ public class ExampleAgent extends AbstractNegotiationParty {
 		    System.out.println(valuesMap);
 		    Value opponentsPreference = lastReceivedOffer.getValue(issue.getNumber());
 		    valuesMap.put(opponentsPreference, new Integer((int)valuesMap.get(opponentsPreference) + 1));
-
-
-		    System.out.println(valuesMap.get(opponentsPreference));
 		    valuesMap.get(lastReceivedOffer.getValue(issue.getNumber()));
-		    System.out.println(issue.getName());
-		    System.out.println(lastReceivedOffer.getValue(issue.getNumber()));
-		    //System.out.println(issue.getName());
 		    int issueNumber = issue.getNumber();
-		    //System.out.println(">> " + issue.getName() + " weight: " + additiveUtilitySpace.getWeight(issueNumber));
-
 		    // Assuming that issues are discrete only
 		    IssueDiscrete issueDiscrete = (IssueDiscrete) issue;
-
 		    for (ValueDiscrete valueDiscrete : issueDiscrete.getValues()) {
 			//System.out.println(valueDiscrete.getValue());
 			try {
@@ -171,6 +165,9 @@ public class ExampleAgent extends AbstractNegotiationParty {
 		    }
 		}
 	    }
+	    System.out.println("Printing the bid history");
+	    System.out.println(bidHistory.getLastBid());
+	    System.out.println(bidHistory.size());
 	}
 
     /**
