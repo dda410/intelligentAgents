@@ -16,11 +16,7 @@ import genius.core.issue.ValueDiscrete;
 import genius.core.parties.AbstractNegotiationParty;
 import genius.core.parties.NegotiationInfo;
 import genius.core.uncertainty.AdditiveUtilitySpaceFactory;
-import genius.core.utility.AbstractUtilitySpace;
 import genius.core.utility.AdditiveUtilitySpace;
-import genius.core.utility.EvaluatorDiscrete;
-import genius.core.utility.UncertainAdditiveUtilitySpace;
-
 import java.util.HashMap;
 
 
@@ -159,12 +155,20 @@ public class ExampleAgent extends AbstractNegotiationParty {
 	    }
 	}
 
-    private double johnnyBlackCalculateValue(int noOfOptions, int ranking) {
+    private double johnnyBlackEstimateValue(int noOfOptions, int ranking) {
 	System.out.println("INSIDE JOHNNY BLAK SHIT");
 	noOfOptions = noOfOptions == 0 ? 1 : noOfOptions;
 	double el1 = noOfOptions - ranking + 1;
 	double el2 = (double) noOfOptions;
 	return el1 / el2;
+    }
+
+    private double johnnyBlackEstimateIssueWeight(ArrayList<Integer> issueFrequencies, int totalFrequencies) {
+	double result = 0;
+	for(int frequency : issueFrequencies) {
+	    result += Math.pow((double) frequency, 2) / Math.pow((double) totalFrequencies, 2);
+	}
+	return result;
     }
 
     private int getSortedIndex(HashMap valuesMap, List<ValueDiscrete> keys, int currentFrequency) {
@@ -200,9 +204,11 @@ public class ExampleAgent extends AbstractNegotiationParty {
 		AdditiveUtilitySpace additiveUtilitySpace = (AdditiveUtilitySpace) utilitySpace;
 		List<Issue> issues = lastReceivedOffer.getIssues();
 		HashMap<String, Double> opponentsCalculatedValues = new HashMap<>();
+		double totalEstimatedIssueWeights = 0;
 		for (Issue issue : issues) {
 		    System.out.println("Printing the shit");
-		    HashMap valuesMap = issuesMap.get(issue.getName());
+		    String issueKey = issue.getName();
+		    HashMap valuesMap = issuesMap.get(issueKey);
 		    Value opponentsPreference = lastReceivedOffer.getValue(issue.getNumber());
 		    valuesMap.put(opponentsPreference, new Integer((int)valuesMap.get(opponentsPreference) + 1));
 		    System.out.println(valuesMap);
@@ -210,16 +216,25 @@ public class ExampleAgent extends AbstractNegotiationParty {
 		    if(offers_counter >= UPDATE_THREESHOLD) {
 			// Updating the opponents estimated utility values with johnny black technique
 			System.out.println("PRINTING_VALUES");
+			ArrayList<Integer> frequencies = new ArrayList<>();
 			IssueDiscrete issueDiscrete = (IssueDiscrete) issue;
 			int numberOfOptions = issueDiscrete.getValues().size();
+			int totalFrequencies = 0;
 			for (ValueDiscrete valueDiscrete : issueDiscrete.getValues()) {
 			    String key = valueDiscrete.getValue();
 			    int frequency = (int) valuesMap.get(key);
-			    double estimatedValue = johnnyBlackCalculateValue(numberOfOptions, getSortedIndex(valuesMap, issueDiscrete.getValues(), frequency));
+			    double estimatedValue = johnnyBlackEstimateValue(numberOfOptions, getSortedIndex(valuesMap, issueDiscrete.getValues(), frequency));
+			    frequencies.add(frequency);
+			    totalFrequencies += frequency;
 			    System.out.println(key);
 			    System.out.println(frequency);
 			    System.out.println(estimatedValue);
 			}
+			double estimatedIssueWeight = johnnyBlackEstimateIssueWeight(frequencies, totalFrequencies);
+			opponentIssueWeights.put(issueKey, estimatedIssueWeight);
+			totalEstimatedIssueWeights += estimatedIssueWeight;
+			System.out.println("The issue estimated weight");
+			System.out.println(estimatedIssueWeight);
 		    }
 
 
@@ -235,7 +250,18 @@ public class ExampleAgent extends AbstractNegotiationParty {
 			}
 		    }
 		}
-		offers_counter = offers_counter >= 10 ? 0 : offers_counter + 1;
+		if(offers_counter >= 10) {
+		    for(Issue issue : issues) {
+			String issueKey = issue.getName();
+			opponentIssueWeights.put(issueKey, opponentIssueWeights.get(issueKey) / totalEstimatedIssueWeights);
+		    }
+		    System.out.println("PRINTING OPPONENTS VALUE QWERTY");
+		    System.out.println(opponentIssueWeights);
+		    offers_counter = 0;
+		} else {
+		    offers_counter += 1;
+		}
+		//            offers_counter = offers_counter >= 10 ? 0 : offers_counter + 1;
 	    }
 	    System.out.println("Printing the bid history");
 	    System.out.println(bidHistory.getLastBid());
