@@ -35,8 +35,13 @@ public class ExampleAgent extends AbstractNegotiationParty {
     private Bid lastReceivedOffer; // offer on the table
     private Bid myLastOffer;
     private HashMap<String, HashMap> issuesMap = new HashMap<>();
+    private HashMap<String, HashMap> opponentsMap = new HashMap<>();
+    private HashMap<String, Double> opponentIssueWeights = new HashMap<String, Double>();
     private BidHistory bidHistory = new BidHistory();
     private List<Bid> bidOrder;
+    private static final int UPDATE_THREESHOLD = 10;
+    private int offers_counter = 0;
+
 
         @Override
 	public void init(NegotiationInfo info) {
@@ -154,6 +159,26 @@ public class ExampleAgent extends AbstractNegotiationParty {
 	    }
 	}
 
+    private double johnnyBlackCalculateValue(int noOfOptions, int ranking) {
+	System.out.println("INSIDE JOHNNY BLAK SHIT");
+	noOfOptions = noOfOptions == 0 ? 1 : noOfOptions;
+	double el1 = noOfOptions - ranking + 1;
+	double el2 = (double) noOfOptions;
+	return el1 / el2;
+    }
+
+    private int getSortedIndex(HashMap valuesMap, List<ValueDiscrete> keys, int currentFrequency) {
+	int result = 0;
+	for(ValueDiscrete valueDiscrete : keys) {
+	    String key = valueDiscrete.getValue();
+	    int frequency = (int) valuesMap.get(key);
+	    if(frequency > currentFrequency) {
+		result += 1;
+	    }
+	}
+	return result + 1;
+    }
+
     /**
      * This method is called to inform the party that another NegotiationParty chose an Action.
      * @param sender
@@ -174,13 +199,31 @@ public class ExampleAgent extends AbstractNegotiationParty {
 		//System.out.println("Received an offer with the following issues");
 		AdditiveUtilitySpace additiveUtilitySpace = (AdditiveUtilitySpace) utilitySpace;
 		List<Issue> issues = lastReceivedOffer.getIssues();
+		HashMap<String, Double> opponentsCalculatedValues = new HashMap<>();
 		for (Issue issue : issues) {
 		    System.out.println("Printing the shit");
 		    HashMap valuesMap = issuesMap.get(issue.getName());
-		    System.out.println(valuesMap);
 		    Value opponentsPreference = lastReceivedOffer.getValue(issue.getNumber());
 		    valuesMap.put(opponentsPreference, new Integer((int)valuesMap.get(opponentsPreference) + 1));
+		    System.out.println(valuesMap);
 		    valuesMap.get(lastReceivedOffer.getValue(issue.getNumber()));
+		    if(offers_counter >= UPDATE_THREESHOLD) {
+			// Updating the opponents estimated utility values with johnny black technique
+			System.out.println("PRINTING_VALUES");
+			IssueDiscrete issueDiscrete = (IssueDiscrete) issue;
+			int numberOfOptions = issueDiscrete.getValues().size();
+			for (ValueDiscrete valueDiscrete : issueDiscrete.getValues()) {
+			    String key = valueDiscrete.getValue();
+			    int frequency = (int) valuesMap.get(key);
+			    double estimatedValue = johnnyBlackCalculateValue(numberOfOptions, getSortedIndex(valuesMap, issueDiscrete.getValues(), frequency));
+			    System.out.println(key);
+			    System.out.println(frequency);
+			    System.out.println(estimatedValue);
+			}
+		    }
+
+
+
 		    int issueNumber = issue.getNumber();
 		    // Assuming that issues are discrete only
 		    IssueDiscrete issueDiscrete = (IssueDiscrete) issue;
@@ -192,6 +235,7 @@ public class ExampleAgent extends AbstractNegotiationParty {
 			}
 		    }
 		}
+		offers_counter = offers_counter >= 10 ? 0 : offers_counter + 1;
 	    }
 	    System.out.println("Printing the bid history");
 	    System.out.println(bidHistory.getLastBid());
