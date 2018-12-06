@@ -31,8 +31,8 @@ public class ExampleAgent extends AbstractNegotiationParty {
     private Bid lastReceivedOffer; // offer on the table
     private Bid myLastOffer;
     private HashMap<String, HashMap> issuesMap = new HashMap<>();
-    private HashMap<String, HashMap> opponentsMap = new HashMap<>();
-    private HashMap<String, Double> opponentIssueWeights = new HashMap<String, Double>();
+    private HashMap<String, HashMap> opponentsIssueMap = new HashMap<>();
+    private HashMap<String, Double> opponentIssueWeights = new HashMap<>();
     private BidHistory bidHistory = new BidHistory();
     private List<Bid> bidOrder;
     private static final int UPDATE_THREESHOLD = 10;
@@ -46,43 +46,23 @@ public class ExampleAgent extends AbstractNegotiationParty {
 	    AdditiveUtilitySpaceFactory factory = new AdditiveUtilitySpaceFactory(domain);
 	    factory.estimateUsingBidRanks(userModel.getBidRanking());
 	    System.out.println(factory.getUtilitySpace());
-	    //System.out.println(factory);
 	    AdditiveUtilitySpace additiveUtilitySpace = factory.getUtilitySpace();
-	    //System.exit(1);
-	    //AbstractUtilitySpace utilitySpace = info.getUtilitySpace();
-	    //AdditiveUtilitySpace additiveUtilitySpace = (AdditiveUtilitySpace) utilitySpace;
-	    //System.out.println("Additive utility space:");
-	    //System.out.println(additiveUtilitySpace.getDomain());
-	    //UncertainAdditiveUtilitySpace uncertainAdditiveUtilitySpace = (UncertainAdditiveUtilitySpace) utilitySpace;
-	    //System.out.println("Unc. Additive utility space:");
-	    //System.out.println(uncertainAdditiveUtilitySpace.getDomain());
-	    // If working with uncertainty
 	    bidOrder = userModel.getBidRanking().getBidOrder();
 	    System.out.println(bidOrder);
 	    System.out.println(bidOrder.size());
-	    //        List< Issue > issuesList = bidOrder.get(0).getIssues();
-	    //
-	    //        for (Issue issue : issuesList) {
-	    //            System.out.println(issue.getName() + ": " + bid.getValue(issue.getNumber()));
-	    //        }
-
-
-
-
-	    //System.exit(1);
 	    List<Issue> issues = additiveUtilitySpace.getDomain().getIssues();
 	    int totalPossibleBids = 1;
 	    for (Issue issue : issues) {
 		System.out.println("Inside issue SDFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
 		int issueNumber = issue.getNumber();
 		//System.out.println(">> " + issue.getName() + " weight: " + additiveUtilitySpace.getWeight(issueNumber));
-
 		// Assuming that issues are discrete only
 		IssueDiscrete issueDiscrete = (IssueDiscrete) issue;
 		//EvaluatorDiscrete evaluatorDiscrete = (EvaluatorDiscrete) additiveUtilitySpace.getEvaluator(issueNumber);
 		HashMap<String, Integer> valuesMap = new HashMap<String, Integer>();
 		int noOfValues = 0;
 		for (ValueDiscrete valueDiscrete : issueDiscrete.getValues()) {
+		    // Initializing frequency list to 0 for each option
 		    valuesMap.put(valueDiscrete.getValue(), 0);
 		    //System.out.println(valueDiscrete.getValue());
 		    //System.out.println("Evaluation(getValue): " + evaluatorDiscrete.getValue(valueDiscrete));
@@ -94,7 +74,6 @@ public class ExampleAgent extends AbstractNegotiationParty {
 		    noOfValues++;
 		}
 		totalPossibleBids *= noOfValues;
-		//System.out.println(valuesMap);
 		issuesMap.put(issue.getName(), valuesMap);
 	    }
 	    System.out.println("All the possible bids:");
@@ -134,7 +113,6 @@ public class ExampleAgent extends AbstractNegotiationParty {
 	    // The time is normalized, so agents need not be
 	    // concerned with the actual internal clock.
 
-
 	    // First half of the negotiation offering the max utility (the best agreement possible) for Example Agent
 	    if (time < 0.5) {
 		return new Offer(this.getPartyId(), this.getMaxUtilityBid());
@@ -156,7 +134,6 @@ public class ExampleAgent extends AbstractNegotiationParty {
 	}
 
     private double johnnyBlackEstimateValue(int noOfOptions, int ranking) {
-	System.out.println("INSIDE JOHNNY BLAK SHIT");
 	noOfOptions = noOfOptions == 0 ? 1 : noOfOptions;
 	double el1 = noOfOptions - ranking + 1;
 	double el2 = (double) noOfOptions;
@@ -190,78 +167,57 @@ public class ExampleAgent extends AbstractNegotiationParty {
      */
         @Override
 	public void receiveMessage(AgentID sender, Action act) {
-	    System.out.println("INSIDE RECEIVE MESSAGE");
-	    System.out.println(issuesMap);
 	    super.receiveMessage(sender, act);
 
 	    if (act instanceof Offer) { // sender is making an offer
 		Offer offer = (Offer) act;
-
-		// storing last received offer
 		lastReceivedOffer = offer.getBid();
 		bidHistory.add(new BidDetails(lastReceivedOffer, 0));
-		//System.out.println("Received an offer with the following issues");
 		AdditiveUtilitySpace additiveUtilitySpace = (AdditiveUtilitySpace) utilitySpace;
 		List<Issue> issues = lastReceivedOffer.getIssues();
-		HashMap<String, Double> opponentsCalculatedValues = new HashMap<>();
 		double totalEstimatedIssueWeights = 0;
 		for (Issue issue : issues) {
-		    System.out.println("Printing the shit");
 		    String issueKey = issue.getName();
 		    HashMap valuesMap = issuesMap.get(issueKey);
 		    Value opponentsPreference = lastReceivedOffer.getValue(issue.getNumber());
 		    valuesMap.put(opponentsPreference, new Integer((int)valuesMap.get(opponentsPreference) + 1));
 		    System.out.println(valuesMap);
 		    valuesMap.get(lastReceivedOffer.getValue(issue.getNumber()));
+		    HashMap<String, Double> opponentOptionsValues = new HashMap<>();
 		    if(offers_counter >= UPDATE_THREESHOLD) {
 			// Updating the opponents estimated utility values with johnny black technique
-			System.out.println("PRINTING_VALUES");
 			ArrayList<Integer> frequencies = new ArrayList<>();
 			IssueDiscrete issueDiscrete = (IssueDiscrete) issue;
 			int numberOfOptions = issueDiscrete.getValues().size();
 			int totalFrequencies = 0;
 			for (ValueDiscrete valueDiscrete : issueDiscrete.getValues()) {
-			    String key = valueDiscrete.getValue();
-			    int frequency = (int) valuesMap.get(key);
+			    String valueKey = valueDiscrete.getValue();
+			    int frequency = (int) valuesMap.get(valueKey);
 			    double estimatedValue = johnnyBlackEstimateValue(numberOfOptions, getSortedIndex(valuesMap, issueDiscrete.getValues(), frequency));
+			    opponentOptionsValues.put(valueKey, estimatedValue);
 			    frequencies.add(frequency);
 			    totalFrequencies += frequency;
-			    System.out.println(key);
-			    System.out.println(frequency);
-			    System.out.println(estimatedValue);
 			}
+			opponentsIssueMap.put(issueKey, opponentOptionsValues);
 			double estimatedIssueWeight = johnnyBlackEstimateIssueWeight(frequencies, totalFrequencies);
 			opponentIssueWeights.put(issueKey, estimatedIssueWeight);
 			totalEstimatedIssueWeights += estimatedIssueWeight;
-			System.out.println("The issue estimated weight");
-			System.out.println(estimatedIssueWeight);
-		    }
-
-
-
-		    int issueNumber = issue.getNumber();
-		    // Assuming that issues are discrete only
-		    IssueDiscrete issueDiscrete = (IssueDiscrete) issue;
-		    for (ValueDiscrete valueDiscrete : issueDiscrete.getValues()) {
-			//System.out.println(valueDiscrete.getValue());
-			try {
-			} catch(Exception e) {
-			    //System.out.println("We have an exception");
-			}
 		    }
 		}
-		if(offers_counter >= 10) {
+		if(offers_counter >= UPDATE_THREESHOLD) {
 		    for(Issue issue : issues) {
 			String issueKey = issue.getName();
+			// Normalizing opponents' estimated weights
 			opponentIssueWeights.put(issueKey, opponentIssueWeights.get(issueKey) / totalEstimatedIssueWeights);
 		    }
-		    System.out.println("PRINTING OPPONENTS VALUE QWERTY");
+		    System.out.println("PRINTING OPPONENTS ISSUE WEIGHTS QWERTY");
 		    System.out.println(opponentIssueWeights);
+		    System.out.println("Printing opponents option values");
+		    System.out.println(opponentsIssueMap);
 		    offers_counter = 0;
 		} else {
 		    offers_counter += 1;
 		}
-		//            offers_counter = offers_counter >= 10 ? 0 : offers_counter + 1;
 	    }
 	    System.out.println("Printing the bid history");
 	    System.out.println(bidHistory.getLastBid());
