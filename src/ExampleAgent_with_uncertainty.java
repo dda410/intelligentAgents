@@ -33,12 +33,12 @@ public class ExampleAgent extends AbstractNegotiationParty {
     private Bid lastReceivedOffer; // offer on the table
     private Bid myLastOffer;
     private HashMap<String, HashMap> issuesMap = new HashMap<>();
-    private HashMap<String, HashMap> opponentsIssueMap = new HashMap<>();
-    private HashMap<String, Double> opponentIssueWeights = new HashMap<>();
+    private AdditiveUtilitySpace opponentsAdditiveUtilitySpace;
     private BidHistory bidHistory = new BidHistory();
     private List<Bid> bidOrder;
     private static final int UPDATE_THREESHOLD = 10;
     private int offers_counter = 0;
+    private AdditiveUtilitySpace additiveUtilitySpace2;
 
 
         @Override
@@ -51,13 +51,15 @@ public class ExampleAgent extends AbstractNegotiationParty {
 	    System.out.println(factory.getUtilitySpace());
 	    System.out.println("UTILITY_SPACE");
 	    AdditiveUtilitySpace additiveUtilitySpace = factory.getUtilitySpace();
+	    additiveUtilitySpace2 = additiveUtilitySpace;
+	    opponentsAdditiveUtilitySpace = (AdditiveUtilitySpace) additiveUtilitySpace.copy();
+	    //        opponentsAdditiveUtilitySpace = additiveUtilitySpace;
 	    bidOrder = userModel.getBidRanking().getBidOrder();
 	    System.out.println(bidOrder);
 	    System.out.println(bidOrder.size());
 	    List<Issue> issues = additiveUtilitySpace.getDomain().getIssues();
 	    int totalPossibleBids = 1;
 	    for (Issue issue : issues) {
-		System.out.println("Inside issue SDFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
 		int issueNumber = issue.getNumber();
 		//System.out.println(">> " + issue.getName() + " weight: " + additiveUtilitySpace.getWeight(issueNumber));
 		// Assuming that issues are discrete only
@@ -164,45 +166,6 @@ public class ExampleAgent extends AbstractNegotiationParty {
 	return result + 1;
     }
 
-    private void estimateOpponentUtility(HashMap<String, HashMap> issMap, HashMap<String, Double> issWeights) {
-	System.out.println("INSIDE THE ESTIMATE OPPONENT UTILITY");
-	AdditiveUtilitySpace op = new AdditiveUtilitySpace();
-	Domain domain = getDomain();
-	AdditiveUtilitySpaceFactory opponentFactory = new AdditiveUtilitySpaceFactory(domain);
-	AdditiveUtilitySpace opponentAdditiveUtilitySpace = opponentFactory.getUtilitySpace();
-	List<Issue> issues = opponentAdditiveUtilitySpace.getDomain().getIssues();
-	for (Issue issue : issues) {
-	    EvaluatorDiscrete ed = new EvaluatorDiscrete();
-	    String issueKey = issue.getName();
-	    System.out.println("THE ISSUE IS");
-	    System.out.println(issueKey);
-	    System.out.println("The issue weight");
-	    System.out.println(issWeights.get(issueKey));
-	    HashMap valuesMap = issMap.get(issueKey);
-	    IssueDiscrete issueDiscrete = (IssueDiscrete) issue;
-	    for(ValueDiscrete vd : issueDiscrete.getValues()) {
-		String valueKey = vd.getValue();
-		double optionValue = (double) valuesMap.get(valueKey);
-		ed.setEvaluationDouble(vd, optionValue);
-		System.out.println("The value key is");
-		System.out.println(valueKey);
-		System.out.println(optionValue);
-		try {
-		    System.out.println(ed.getEvaluationNotNormalized(vd));
-		} catch(Exception e) {
-
-		}
-	    }
-	    ed.setWeight(issWeights.get(issueKey));
-	    op.addEvaluator(issue, ed);
-	    System.out.println("ESTIMATED OPPONENT UTILITY FOR THIS ISSUE");
-	    System.out.println(ed.getWeight());
-	}
-	System.out.println("OPPONENT UTILITY CRAP");
-	System.out.println(op);
-	System.out.println("End opponent utility crap");
-    }
-
     /**
      * This method is called to inform the party that another NegotiationParty chose an Action.
      * @param sender
@@ -215,17 +178,14 @@ public class ExampleAgent extends AbstractNegotiationParty {
 	    if (act instanceof Offer) { // sender is making an offer
 		Offer offer = (Offer) act;
 		lastReceivedOffer = offer.getBid();
-		AdditiveUtilitySpace op = new AdditiveUtilitySpace();
-		bidHistory.add(new BidDetails(lastReceivedOffer, 0));
+		AdditiveUtilitySpace op = opponentsAdditiveUtilitySpace;
 		List<Issue> issues = lastReceivedOffer.getIssues();
-		double totalEstimatedIssueWeights = 0;
 		for (Issue issue : issues) {
 		    EvaluatorDiscrete ed = new EvaluatorDiscrete();
 		    String issueKey = issue.getName();
 		    HashMap valuesMap = issuesMap.get(issueKey);
 		    Value opponentsPreference = lastReceivedOffer.getValue(issue.getNumber());
 		    valuesMap.put(opponentsPreference, new Integer((int)valuesMap.get(opponentsPreference) + 1));
-		    System.out.println(valuesMap);
 		    valuesMap.get(lastReceivedOffer.getValue(issue.getNumber()));
 		    HashMap<String, Double> opponentOptionsValues = new HashMap<>();
 		    if(offers_counter >= UPDATE_THREESHOLD) {
@@ -243,39 +203,31 @@ public class ExampleAgent extends AbstractNegotiationParty {
 			    totalFrequencies += frequency;
 			    ed.setEvaluationDouble(valueDiscrete, estimatedValue);
 			}
-			opponentsIssueMap.put(issueKey, opponentOptionsValues);
 			double estimatedIssueWeight = johnnyBlackEstimateIssueWeight(frequencies, totalFrequencies);
-			opponentIssueWeights.put(issueKey, estimatedIssueWeight);
 			ed.setWeight(estimatedIssueWeight);
 			op.addEvaluator(issue, ed);
-			totalEstimatedIssueWeights += estimatedIssueWeight;
 		    }
 		}
 		if(offers_counter >= UPDATE_THREESHOLD) {
-		    for(Issue issue : issues) {
-			String issueKey = issue.getName();
-			// Normalizing opponents' estimated weights
-			opponentIssueWeights.put(issueKey, opponentIssueWeights.get(issueKey) / totalEstimatedIssueWeights);
-		    }
-		    System.out.println("PRINTING OPPONENTS ISSUE WEIGHTS QWERTY");
-		    System.out.println(opponentIssueWeights);
-		    System.out.println("Printing opponents option values");
-		    System.out.println(opponentsIssueMap);
-		    estimateOpponentUtility(opponentsIssueMap, opponentIssueWeights);
 		    System.out.println("OPPONENT ADDITIVE UTILITY SPACE BEFORE NORMALIZATION");
 		    System.out.println(op);
 		    op.normalizeWeights();
 		    System.out.println("OPPONENT ADDITIVE UTILITY SPACE AFTER NORMALIZATION");
 		    System.out.println(op);
-		    //                System.out.println(opponentAdditiveUtilitySpace);
+		    opponentsAdditiveUtilitySpace = op;
 		    offers_counter = 0;
 		} else {
 		    offers_counter += 1;
 		}
+		System.out.println("Printing last bid utility");
+		System.out.println(opponentsAdditiveUtilitySpace);
+		bidHistory.add(new BidDetails(lastReceivedOffer, opponentsAdditiveUtilitySpace.getUtility(lastReceivedOffer)));
+		System.out.println("Printing the bid history");
+		System.out.println(bidHistory.getLastBid());
+		System.out.println(bidHistory.getLastBidDetails());
+		System.out.println(additiveUtilitySpace2.getUtility(lastReceivedOffer));
+		System.out.println(bidHistory.size());
 	    }
-	    System.out.println("Printing the bid history");
-	    System.out.println(bidHistory.getLastBid());
-	    System.out.println(bidHistory.size());
 	}
 
     /**
