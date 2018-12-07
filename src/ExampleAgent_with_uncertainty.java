@@ -17,6 +17,8 @@ import genius.core.parties.AbstractNegotiationParty;
 import genius.core.parties.NegotiationInfo;
 import genius.core.uncertainty.AdditiveUtilitySpaceFactory;
 import genius.core.utility.AdditiveUtilitySpace;
+import genius.core.utility.EvaluatorDiscrete;
+
 import java.util.HashMap;
 
 
@@ -45,7 +47,9 @@ public class ExampleAgent extends AbstractNegotiationParty {
 	    Domain domain = getDomain();
 	    AdditiveUtilitySpaceFactory factory = new AdditiveUtilitySpaceFactory(domain);
 	    factory.estimateUsingBidRanks(userModel.getBidRanking());
+	    System.out.println("UTILITY_SPACE");
 	    System.out.println(factory.getUtilitySpace());
+	    System.out.println("UTILITY_SPACE");
 	    AdditiveUtilitySpace additiveUtilitySpace = factory.getUtilitySpace();
 	    bidOrder = userModel.getBidRanking().getBidOrder();
 	    System.out.println(bidOrder);
@@ -160,6 +164,45 @@ public class ExampleAgent extends AbstractNegotiationParty {
 	return result + 1;
     }
 
+    private void estimateOpponentUtility(HashMap<String, HashMap> issMap, HashMap<String, Double> issWeights) {
+	System.out.println("INSIDE THE ESTIMATE OPPONENT UTILITY");
+	AdditiveUtilitySpace op = new AdditiveUtilitySpace();
+	Domain domain = getDomain();
+	AdditiveUtilitySpaceFactory opponentFactory = new AdditiveUtilitySpaceFactory(domain);
+	AdditiveUtilitySpace opponentAdditiveUtilitySpace = opponentFactory.getUtilitySpace();
+	List<Issue> issues = opponentAdditiveUtilitySpace.getDomain().getIssues();
+	for (Issue issue : issues) {
+	    EvaluatorDiscrete ed = new EvaluatorDiscrete();
+	    String issueKey = issue.getName();
+	    System.out.println("THE ISSUE IS");
+	    System.out.println(issueKey);
+	    System.out.println("The issue weight");
+	    System.out.println(issWeights.get(issueKey));
+	    HashMap valuesMap = issMap.get(issueKey);
+	    IssueDiscrete issueDiscrete = (IssueDiscrete) issue;
+	    for(ValueDiscrete vd : issueDiscrete.getValues()) {
+		String valueKey = vd.getValue();
+		double optionValue = (double) valuesMap.get(valueKey);
+		ed.setEvaluationDouble(vd, optionValue);
+		System.out.println("The value key is");
+		System.out.println(valueKey);
+		System.out.println(optionValue);
+		try {
+		    System.out.println(ed.getEvaluationNotNormalized(vd));
+		} catch(Exception e) {
+
+		}
+	    }
+	    ed.setWeight(issWeights.get(issueKey));
+	    op.addEvaluator(issue, ed);
+	    System.out.println("ESTIMATED OPPONENT UTILITY FOR THIS ISSUE");
+	    System.out.println(ed.getWeight());
+	}
+	System.out.println("OPPONENT UTILITY CRAP");
+	System.out.println(op);
+	System.out.println("End opponent utility crap");
+    }
+
     /**
      * This method is called to inform the party that another NegotiationParty chose an Action.
      * @param sender
@@ -173,7 +216,7 @@ public class ExampleAgent extends AbstractNegotiationParty {
 		Offer offer = (Offer) act;
 		lastReceivedOffer = offer.getBid();
 		bidHistory.add(new BidDetails(lastReceivedOffer, 0));
-		AdditiveUtilitySpace additiveUtilitySpace = (AdditiveUtilitySpace) utilitySpace;
+		//            AdditiveUtilitySpace opponentAdditiveUtilitySpace = (AdditiveUtilitySpace) utilitySpace;
 		List<Issue> issues = lastReceivedOffer.getIssues();
 		double totalEstimatedIssueWeights = 0;
 		for (Issue issue : issues) {
@@ -209,11 +252,16 @@ public class ExampleAgent extends AbstractNegotiationParty {
 			String issueKey = issue.getName();
 			// Normalizing opponents' estimated weights
 			opponentIssueWeights.put(issueKey, opponentIssueWeights.get(issueKey) / totalEstimatedIssueWeights);
+			//                    opponentAdditiveUtilitySpace.setWeight(issue, opponentIssueWeights.get(issueKey));
+			IssueDiscrete issueDiscrete = (IssueDiscrete) issue;
 		    }
 		    System.out.println("PRINTING OPPONENTS ISSUE WEIGHTS QWERTY");
 		    System.out.println(opponentIssueWeights);
 		    System.out.println("Printing opponents option values");
 		    System.out.println(opponentsIssueMap);
+		    estimateOpponentUtility(opponentsIssueMap, opponentIssueWeights);
+		    System.out.println("OPPONENT ADDITIVE UTILITY SPACE");
+		    //                System.out.println(opponentAdditiveUtilitySpace);
 		    offers_counter = 0;
 		} else {
 		    offers_counter += 1;
