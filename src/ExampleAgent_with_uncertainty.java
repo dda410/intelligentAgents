@@ -215,11 +215,12 @@ public class ExampleAgent extends AbstractNegotiationParty {
 	    if (act instanceof Offer) { // sender is making an offer
 		Offer offer = (Offer) act;
 		lastReceivedOffer = offer.getBid();
+		AdditiveUtilitySpace op = new AdditiveUtilitySpace();
 		bidHistory.add(new BidDetails(lastReceivedOffer, 0));
-		//            AdditiveUtilitySpace opponentAdditiveUtilitySpace = (AdditiveUtilitySpace) utilitySpace;
 		List<Issue> issues = lastReceivedOffer.getIssues();
 		double totalEstimatedIssueWeights = 0;
 		for (Issue issue : issues) {
+		    EvaluatorDiscrete ed = new EvaluatorDiscrete();
 		    String issueKey = issue.getName();
 		    HashMap valuesMap = issuesMap.get(issueKey);
 		    Value opponentsPreference = lastReceivedOffer.getValue(issue.getNumber());
@@ -240,10 +241,13 @@ public class ExampleAgent extends AbstractNegotiationParty {
 			    opponentOptionsValues.put(valueKey, estimatedValue);
 			    frequencies.add(frequency);
 			    totalFrequencies += frequency;
+			    ed.setEvaluationDouble(valueDiscrete, estimatedValue);
 			}
 			opponentsIssueMap.put(issueKey, opponentOptionsValues);
 			double estimatedIssueWeight = johnnyBlackEstimateIssueWeight(frequencies, totalFrequencies);
 			opponentIssueWeights.put(issueKey, estimatedIssueWeight);
+			ed.setWeight(estimatedIssueWeight);
+			op.addEvaluator(issue, ed);
 			totalEstimatedIssueWeights += estimatedIssueWeight;
 		    }
 		}
@@ -252,15 +256,17 @@ public class ExampleAgent extends AbstractNegotiationParty {
 			String issueKey = issue.getName();
 			// Normalizing opponents' estimated weights
 			opponentIssueWeights.put(issueKey, opponentIssueWeights.get(issueKey) / totalEstimatedIssueWeights);
-			//                    opponentAdditiveUtilitySpace.setWeight(issue, opponentIssueWeights.get(issueKey));
-			IssueDiscrete issueDiscrete = (IssueDiscrete) issue;
 		    }
 		    System.out.println("PRINTING OPPONENTS ISSUE WEIGHTS QWERTY");
 		    System.out.println(opponentIssueWeights);
 		    System.out.println("Printing opponents option values");
 		    System.out.println(opponentsIssueMap);
 		    estimateOpponentUtility(opponentsIssueMap, opponentIssueWeights);
-		    System.out.println("OPPONENT ADDITIVE UTILITY SPACE");
+		    System.out.println("OPPONENT ADDITIVE UTILITY SPACE BEFORE NORMALIZATION");
+		    System.out.println(op);
+		    op.normalizeWeights();
+		    System.out.println("OPPONENT ADDITIVE UTILITY SPACE AFTER NORMALIZATION");
+		    System.out.println(op);
 		    //                System.out.println(opponentAdditiveUtilitySpace);
 		    offers_counter = 0;
 		} else {
