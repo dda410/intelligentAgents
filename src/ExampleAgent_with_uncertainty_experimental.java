@@ -120,9 +120,9 @@ public class ExampleAgent extends AbstractNegotiationParty {
 	    }
 	}
 	BidDetails result = bids.get(0);
-	double resultUtility = opponentsAdditiveUtilitySpace.getUtility(result.getBid());
+	double resultUtility = 0;
 	for (BidDetails bidDetails : bids) {
-	    double bidUtility = opponentsAdditiveUtilitySpace.getUtility(bidDetails.getBid());
+	    double bidUtility = opponentsAdditiveUtilitySpace.getUtility(bidDetails.getBid()) * bidDetails.getMyUndiscountedUtil();
 	    //            System.out.println("Inside loop");
 	    //            System.out.println(bidDetails.getBid());
 	    //            System.out.println(bidDetails.getMyUndiscountedUtil());
