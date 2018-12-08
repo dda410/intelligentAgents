@@ -34,11 +34,13 @@ public class ExampleAgent extends AbstractNegotiationParty {
     private Bid myLastOffer;
     private HashMap<String, HashMap> issuesMap = new HashMap<>();
     private AdditiveUtilitySpace opponentsAdditiveUtilitySpace;
-    private BidHistory bidHistory = new BidHistory();
+    private BidHistory bidHistoryOppHisUtility = new BidHistory();
+    private BidHistory bidHistoryOppOurUtility = new BidHistory();
     private List<Bid> bidOrder;
     private static final int UPDATE_THREESHOLD = 10;
     private int offers_counter = 0;
     private AdditiveUtilitySpace additiveUtilitySpace2;
+    private double psi = 0.6;  // psi < 1 -> boulware; psi > 1 -> conceader; psi == 1 -> linear;
 
 
         @Override
@@ -132,7 +134,7 @@ public class ExampleAgent extends AbstractNegotiationParty {
 		    return new Accept(this.getPartyId(), lastReceivedOffer);
 		} else {
 		    // Offering a random bid
-		    return new Offer(this.getPartyId(), this.generateRandomBidWithUtility((double) 1 - time));
+		    return new Offer(this.getPartyId(), this.generateRandomBidWithUtility((double) 1 - Math.pow(time, 1 / psi)));
 		    //                myLastOffer = generateRandomBid();
 		    //                return new Offer(this.getPartyId(), myLastOffer);
 		}
@@ -178,7 +180,6 @@ public class ExampleAgent extends AbstractNegotiationParty {
 	    if (act instanceof Offer) { // sender is making an offer
 		Offer offer = (Offer) act;
 		lastReceivedOffer = offer.getBid();
-		AdditiveUtilitySpace op = opponentsAdditiveUtilitySpace;
 		List<Issue> issues = lastReceivedOffer.getIssues();
 		for (Issue issue : issues) {
 		    EvaluatorDiscrete ed = new EvaluatorDiscrete();
@@ -205,28 +206,33 @@ public class ExampleAgent extends AbstractNegotiationParty {
 			}
 			double estimatedIssueWeight = johnnyBlackEstimateIssueWeight(frequencies, totalFrequencies);
 			ed.setWeight(estimatedIssueWeight);
-			op.addEvaluator(issue, ed);
+			opponentsAdditiveUtilitySpace.addEvaluator(issue, ed);
 		    }
 		}
 		if(offers_counter >= UPDATE_THREESHOLD) {
 		    System.out.println("OPPONENT ADDITIVE UTILITY SPACE BEFORE NORMALIZATION");
-		    System.out.println(op);
-		    op.normalizeWeights();
+		    System.out.println(opponentsAdditiveUtilitySpace);
+		    opponentsAdditiveUtilitySpace.normalizeWeights();
 		    System.out.println("OPPONENT ADDITIVE UTILITY SPACE AFTER NORMALIZATION");
-		    System.out.println(op);
-		    opponentsAdditiveUtilitySpace = op;
+		    System.out.println(opponentsAdditiveUtilitySpace);
 		    offers_counter = 0;
 		} else {
 		    offers_counter += 1;
 		}
 		System.out.println("Printing last bid utility");
-		System.out.println(opponentsAdditiveUtilitySpace);
-		bidHistory.add(new BidDetails(lastReceivedOffer, opponentsAdditiveUtilitySpace.getUtility(lastReceivedOffer)));
+		System.out.println(this.opponentsAdditiveUtilitySpace);
+		bidHistoryOppHisUtility.add(new BidDetails(lastReceivedOffer, this.opponentsAdditiveUtilitySpace.getUtility(lastReceivedOffer)));
+		bidHistoryOppOurUtility.add(new BidDetails(lastReceivedOffer, getUtility(lastReceivedOffer)));
 		System.out.println("Printing the bid history");
-		System.out.println(bidHistory.getLastBid());
-		System.out.println(bidHistory.getLastBidDetails());
+		System.out.println(bidHistoryOppHisUtility.getLastBid());
+		System.out.println(bidHistoryOppHisUtility.getLastBidDetails());
 		System.out.println(additiveUtilitySpace2.getUtility(lastReceivedOffer));
-		System.out.println(bidHistory.size());
+		System.out.println(bidHistoryOppHisUtility.size());
+	    } else {
+		System.out.println("Bid hisotry opponent with his utility");
+		System.out.println(bidHistoryOppHisUtility.getHistory());
+		System.out.println("Bid history opponent our utility");
+		System.out.println(bidHistoryOppOurUtility.getHistory());
 	    }
 	}
 
