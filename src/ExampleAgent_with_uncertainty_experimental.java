@@ -155,28 +155,28 @@ public class ExampleAgent extends AbstractNegotiationParty {
 	    // concerned with the actual internal clock.
 
 	    // First half of the negotiation offering the max utility (the best agreement possible) for Example Agent
-	    if (time < 0.5) {
-		Bid b = generateBestBidWithinRangeForOpponent((double) 1 - Math.pow(time, 1 / psi));
-		return new Offer(this.getPartyId(), b);
-		//            return new Offer(this.getPartyId(), this.getMaxUtilityBid());
+	    //        if (time < 0.5) {
+	    //            Bid b = generateBestBidWithinRangeForOpponent((double) 1 - Math.pow(time, 1 / psi));
+	    //            return new Offer(this.getPartyId(), b);
+	    ////            return new Offer(this.getPartyId(), this.getMaxUtilityBid());
+	    //        } else {
+	    // Accepts the bid on the table in this phase,
+	    // if the utility of the bid is higher than Example Agent's last bid.
+	    if (lastReceivedOffer != null
+		                    && myLastOffer != null
+		&& this.utilitySpace.getUtility(lastReceivedOffer) > this.utilitySpace.getUtility(myLastOffer)) {
+		myLastOffer = generateBestBidWithinRangeForOpponent((double) 1 - Math.pow(time, 1 / psi));
+		//                return new Offer(this.getPartyId(), myLastOffer);
+		return new Accept(this.getPartyId(), lastReceivedOffer);
 	    } else {
-		// Accepts the bid on the table in this phase,
-		// if the utility of the bid is higher than Example Agent's last bid.
-		if (lastReceivedOffer != null
-		                        && myLastOffer != null
-		    && this.utilitySpace.getUtility(lastReceivedOffer) > this.utilitySpace.getUtility(myLastOffer)) {
-		    Bid b = generateBestBidWithinRangeForOpponent((double) 1 - Math.pow(time, 1 / psi));
-		    return new Offer(this.getPartyId(), b);
-		    //                return new Accept(this.getPartyId(), lastReceivedOffer);
-		} else {
-		    // Offering a random bid
-		    Bid b = generateBestBidWithinRangeForOpponent((double) 1 - Math.pow(time, 1 / psi));
-		    return new Offer(this.getPartyId(), b);
-		    //                return new Offer(this.getPartyId(), this.generateRandomBidWithUtility((double) 1 - Math.pow(time, 1 / psi)));
-		    //                myLastOffer = generateRandomBid();
-		    //                return new Offer(this.getPartyId(), myLastOffer);
-		}
+		// Offering a random bid
+		myLastOffer = generateBestBidWithinRangeForOpponent((double) 1 - Math.pow(time, 1 / psi));
+		return new Offer(this.getPartyId(), myLastOffer);
+		//                return new Offer(this.getPartyId(), this.generateRandomBidWithUtility((double) 1 - Math.pow(time, 1 / psi)));
+		//                myLastOffer = generateRandomBid();
+		//                return new Offer(this.getPartyId(), myLastOffer);
 	    }
+	    //        }
 	}
 
     private double johnnyBlackEstimateValue(int noOfOptions, int ranking) {
