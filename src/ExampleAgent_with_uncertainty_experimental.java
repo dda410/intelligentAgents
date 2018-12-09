@@ -164,12 +164,12 @@ public class ExampleAgent extends AbstractNegotiationParty {
 	    // Accepts the bid on the table in this phase,
 	    // if the utility of the bid is higher than Example Agent's last bid.
 	    if (lastReceivedOffer != null
-		                    && myLastOffer != null
+		                && myLastOffer != null
 		&& this.utilitySpace.getUtility(lastReceivedOffer) * opponentsAdditiveUtilitySpace.getUtility(lastReceivedOffer) > this.utilitySpace.getUtility(myLastOffer) * opponentsAdditiveUtilitySpace.getUtility(myLastOffer)
-		&& this.getUtility(lastReceivedOffer) > this.getUtility(myLastOffer)){
+		&& this.getUtility(lastReceivedOffer) >= this.getUtility(myLastOffer)){
 		//                myLastOffer = generateBestBidWithinRangeForOpponent((double) 1 - Math.pow(time, 1 / psi));
-		return new Offer(this.getPartyId(), myLastOffer);
-		//                return new Accept(this.getPartyId(), lastReceivedOffer);
+		//            return new Offer(this.getPartyId(), myLastOffer);
+		return new Accept(this.getPartyId(), lastReceivedOffer);
 	    } else {
 		// Offering a random bid
 		double utility = (double) 1 - Math.pow(time, 1 / psi);
