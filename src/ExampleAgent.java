@@ -36,12 +36,12 @@ public class ExampleAgent extends AbstractNegotiationParty {
     private Bid myLastOffer;
     private HashMap<String, HashMap> issuesMap = new HashMap<>();
     private AdditiveUtilitySpace opponentsAdditiveUtilitySpace;
-    private BidHistory bidHistoryOppHisUtility = new BidHistory();
-    private BidHistory bidHistoryOppOurUtility = new BidHistory();
-    private List<Bid> bidOrder;
+    //    private BidHistory bidHistoryOppHisUtility = new BidHistory();
+    //    private BidHistory bidHistoryOppOurUtility = new BidHistory();
+    //    private List<Bid> bidOrder;
     private static final int UPDATE_THREESHOLD = 10;
     private int offers_counter = 0;
-    private AdditiveUtilitySpace additiveUtilitySpace2;
+    //    private AdditiveUtilitySpace additiveUtilitySpace2;
     private double psi = 0.3;  // psi < 1 -> boulware; psi > 1 -> conceader; psi == 1 -> linear;
     private boolean sendingSameOffer = false;
     private double delta;
@@ -55,9 +55,9 @@ public class ExampleAgent extends AbstractNegotiationParty {
 	    AdditiveUtilitySpaceFactory factory = new AdditiveUtilitySpaceFactory(domain);
 	    factory.estimateUsingBidRanks(userModel.getBidRanking());
 	    AdditiveUtilitySpace additiveUtilitySpace = factory.getUtilitySpace();
-	    additiveUtilitySpace2 = additiveUtilitySpace;
+	    //        additiveUtilitySpace2 = additiveUtilitySpace;
 	    opponentsAdditiveUtilitySpace = (AdditiveUtilitySpace) additiveUtilitySpace.copy();
-	    bidOrder = userModel.getBidRanking().getBidOrder();
+	    //        bidOrder = userModel.getBidRanking().getBidOrder();
 	    List<Issue> issues = additiveUtilitySpace.getDomain().getIssues();
 	    for (Issue issue : issues) {
 		// Assuming that issues are discrete only
@@ -201,41 +201,25 @@ public class ExampleAgent extends AbstractNegotiationParty {
 			opponentsAdditiveUtilitySpace.addEvaluator(issue, ed);
 		    }
 		}
-		bidHistoryOppHisUtility.add(new BidDetails(lastReceivedOffer, opponentsAdditiveUtilitySpace.getUtility(lastReceivedOffer)));
-		bidHistoryOppOurUtility.add(new BidDetails(lastReceivedOffer, getUtility(lastReceivedOffer)));
+		//            bidHistoryOppHisUtility.add(new BidDetails(lastReceivedOffer, opponentsAdditiveUtilitySpace.getUtility(lastReceivedOffer)));
+		//            bidHistoryOppOurUtility.add(new BidDetails(lastReceivedOffer, getUtility(lastReceivedOffer)));
 		if(offers_counter >= UPDATE_THREESHOLD) {
-		    System.out.println("OPPONENT ADDITIVE UTILITY SPACE BEFORE NORMALIZATION");
-		    System.out.println(opponentsAdditiveUtilitySpace);
 		    opponentsAdditiveUtilitySpace.normalizeWeights();
-		    System.out.println("OPPONENT ADDITIVE UTILITY SPACE AFTER NORMALIZATION");
-		    System.out.println(opponentsAdditiveUtilitySpace);
-		    Bid bid = bidHistoryOppHisUtility.getHistory().get(bidHistoryOppHisUtility.size() - UPDATE_THREESHOLD - 1).getBid();
-		    for (int i = bidHistoryOppHisUtility.size() - UPDATE_THREESHOLD; i < bidHistoryOppHisUtility.size(); i++) {
-			if(bid.equals(bidHistoryOppHisUtility.getHistory().get(i).getBid())) {
-			    sendingSameOffer = false;
-			    System.out.println("THEY ARE THE SAME");
-			} else {
-			    sendingSameOffer = false;
-			    System.out.println("THEY ARE NOT THE SAME");
-			    break;
-			}
-		    }
+		    //                Bid bid = bidHistoryOppHisUtility.getHistory().get(bidHistoryOppHisUtility.size() - UPDATE_THREESHOLD - 1).getBid();
+		    //                for (int i = bidHistoryOppHisUtility.size() - UPDATE_THREESHOLD; i < bidHistoryOppHisUtility.size(); i++) {
+		    //                    if(bid.equals(bidHistoryOppHisUtility.getHistory().get(i).getBid())) {
+		    //                        sendingSameOffer = false;
+		    //                        System.out.println("THEY ARE THE SAME");
+		    //                    } else {
+		    //                        sendingSameOffer = false;
+		    //                        System.out.println("THEY ARE NOT THE SAME");
+		    //                        break;
+		    //                    }
+		    //                }
 		    offers_counter = 0;
 		} else {
 		    offers_counter += 1;
 		}
-		System.out.println("Printing last bid utility");
-		System.out.println(opponentsAdditiveUtilitySpace);
-		System.out.println("Printing the bid history");
-		System.out.println(bidHistoryOppHisUtility.getLastBid());
-		System.out.println(bidHistoryOppHisUtility.getLastBidDetails());
-		System.out.println(additiveUtilitySpace2.getUtility(lastReceivedOffer));
-		System.out.println(bidHistoryOppHisUtility.size());
-	    } else {
-		System.out.println("Bid hisotry opponent with his utility");
-		System.out.println(bidHistoryOppHisUtility.getHistory());
-		System.out.println("Bid history opponent our utility");
-		System.out.println(bidHistoryOppOurUtility.getHistory());
 	    }
 	}
 
