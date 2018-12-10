@@ -1,0 +1,4 @@
+javac -cp genius-9.1.5.jar group9/Agent9.java
+jar -cvf group9.jar group9
+echo "Do not forget to put package inside .java file: package group9;"
+echo "Do not forget to name class Agent9 and file Agent9.java"
