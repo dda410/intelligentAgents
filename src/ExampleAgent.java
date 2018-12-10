@@ -51,48 +51,24 @@ public class ExampleAgent extends AbstractNegotiationParty {
 	public void init(NegotiationInfo info) {
 	    super.init(info);
 	    Domain domain = getDomain();
+	    delta = 0.000001 * domain.getNumberOfPossibleBids();
 	    AdditiveUtilitySpaceFactory factory = new AdditiveUtilitySpaceFactory(domain);
 	    factory.estimateUsingBidRanks(userModel.getBidRanking());
-	    System.out.println("UTILITY_SPACE");
-	    System.out.println(factory.getUtilitySpace());
-	    System.out.println("UTILITY_SPACE");
 	    AdditiveUtilitySpace additiveUtilitySpace = factory.getUtilitySpace();
 	    additiveUtilitySpace2 = additiveUtilitySpace;
 	    opponentsAdditiveUtilitySpace = (AdditiveUtilitySpace) additiveUtilitySpace.copy();
-	    //        opponentsAdditiveUtilitySpace = additiveUtilitySpace;
 	    bidOrder = userModel.getBidRanking().getBidOrder();
-	    System.out.println(bidOrder);
-	    System.out.println(bidOrder.size());
 	    List<Issue> issues = additiveUtilitySpace.getDomain().getIssues();
-	    int totalPossibleBids = 1;
 	    for (Issue issue : issues) {
-		int issueNumber = issue.getNumber();
-		//System.out.println(">> " + issue.getName() + " weight: " + additiveUtilitySpace.getWeight(issueNumber));
 		// Assuming that issues are discrete only
 		IssueDiscrete issueDiscrete = (IssueDiscrete) issue;
-		//EvaluatorDiscrete evaluatorDiscrete = (EvaluatorDiscrete) additiveUtilitySpace.getEvaluator(issueNumber);
 		HashMap<String, Integer> valuesMap = new HashMap<String, Integer>();
-		int noOfValues = 0;
 		for (ValueDiscrete valueDiscrete : issueDiscrete.getValues()) {
 		    // Initializing frequency list to 0 for each option
 		    valuesMap.put(valueDiscrete.getValue(), 0);
-		    //System.out.println(valueDiscrete.getValue());
-		    //System.out.println("Evaluation(getValue): " + evaluatorDiscrete.getValue(valueDiscrete));
-		    try {
-			//System.out.println("Evaluation(getEvaluation): " + evaluatorDiscrete.getEvaluation(valueDiscrete));
-		    } catch(Exception e) {
-			//System.out.println("We have an exception");
-		    }
-		    noOfValues++;
 		}
-		totalPossibleBids *= noOfValues;
 		issuesMap.put(issue.getName(), valuesMap);
 	    }
-	    System.out.println("All the possible bids:");
-	    System.out.println(totalPossibleBids);
-	    double delta = 0.000001*totalPossibleBids;
-	    System.out.println("THE COMPLETE ISSUE MAP");
-	    System.out.println(issuesMap);
 	}
 
     public Bid generateRandomBidWithUtility(double utilityThreshold) {
@@ -112,7 +88,6 @@ public class ExampleAgent extends AbstractNegotiationParty {
     }
 
     private Bid generateBestBidWithinRangeForOpponent(double utilityThreshold) {
-	//        BidDetails result = new BidDetails();
 	OutcomeSpace outcomeSpace = new OutcomeSpace(utilitySpace);
 	List<BidDetails> bids = outcomeSpace.getBidsinRange(new Range(utilityThreshold, 1.1));
 	if(bids.size() < 1) {
@@ -126,19 +101,11 @@ public class ExampleAgent extends AbstractNegotiationParty {
 	double resultUtility = 0;
 	for (BidDetails bidDetails : bids) {
 	    double bidUtility = opponentsAdditiveUtilitySpace.getUtility(bidDetails.getBid()) * bidDetails.getMyUndiscountedUtil();
-	    //            System.out.println("Inside loop");
-	    //            System.out.println(bidDetails.getBid());
-	    //            System.out.println(bidDetails.getMyUndiscountedUtil());
-	    //            System.out.println(bidUtility);
 	    if(resultUtility < bidUtility) {
 		result = bidDetails;
 		resultUtility = bidUtility;
 	    }
 	}
-	System.out.println("The selected bid");
-	System.out.println(result.getBid());
-	System.out.println(result.getMyUndiscountedUtil());
-	System.out.println(resultUtility);
 	return result.getBid();
     }
 
@@ -154,35 +121,16 @@ public class ExampleAgent extends AbstractNegotiationParty {
 	    // According to Stacked Alternating Offers Protocol list includes
 	    // Accept, Offer and EndNegotiation actions only.
 	    double time = getTimeLine().getTime(); // Gets the time, running from t = 0 (start) to t = 1 (deadline).
-	    // The time is normalized, so agents need not be
-	    // concerned with the actual internal clock.
-
-	    // First half of the negotiation offering the max utility (the best agreement possible) for Example Agent
-	    //        if (time < 0.5) {
-	    //            Bid b = generateBestBidWithinRangeForOpponent((double) 1 - Math.pow(time, 1 / psi));
-	    //            return new Offer(this.getPartyId(), b);
-	    ////            return new Offer(this.getPartyId(), this.getMaxUtilityBid());
-	    //        } else {
-	    // Accepts the bid on the table in this phase,
-	    // if the utility of the bid is higher than Example Agent's last bid.
 	    if (lastReceivedOffer != null
 		                && myLastOffer != null
 		&& (this.utilitySpace.getUtility(lastReceivedOffer) * opponentsAdditiveUtilitySpace.getUtility(lastReceivedOffer) >= this.utilitySpace.getUtility(myLastOffer) * opponentsAdditiveUtilitySpace.getUtility(myLastOffer)-delta
-		    || this.utilitySpace.getUtility(lastReceivedOffer) > opponentsAdditiveUtilitySpace.getUtility(lastReceivedOffer))){
-		//                && this.getUtility(lastReceivedOffer) >= this.getUtility(myLastOffer)) {
-		//                myLastOffer = generateBestBidWithinRangeForOpponent((double) 1 - Math.pow(time, 1 / psi));
-		//            return new Offer(this.getPartyId(), myLastOffer);
+		    || this.utilitySpace.getUtility(lastReceivedOffer) > opponentsAdditiveUtilitySpace.getUtility(lastReceivedOffer))) {
 		return new Accept(this.getPartyId(), lastReceivedOffer);
 	    } else {
-		// Offering a random bid
 		double utility = (double) 1 - Math.pow(time, 1 / psi);
 		myLastOffer = sendingSameOffer ?  generateRandomBidWithUtility(utility) : generateBestBidWithinRangeForOpponent(utility);
 		return new Offer(this.getPartyId(), myLastOffer);
-		//                return new Offer(this.getPartyId(), this.generateRandomBidWithUtility((double) 1 - Math.pow(time, 1 / psi)));
-		//                myLastOffer = generateRandomBid();
-		//                return new Offer(this.getPartyId(), myLastOffer);
 	    }
-	    //        }
 	}
 
     private double johnnyBlackEstimateValue(int noOfOptions, int ranking) {
