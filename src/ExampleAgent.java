@@ -264,7 +264,7 @@ public class ExampleAgent extends AbstractNegotiationParty {
 		    Bid bid = bidHistoryOppHisUtility.getHistory().get(bidHistoryOppHisUtility.size() - UPDATE_THREESHOLD - 1).getBid();
 		    for (int i = bidHistoryOppHisUtility.size() - UPDATE_THREESHOLD; i < bidHistoryOppHisUtility.size(); i++) {
 			if(bid.equals(bidHistoryOppHisUtility.getHistory().get(i).getBid())) {
-			    sendingSameOffer = true;
+			    sendingSameOffer = false;
 			    System.out.println("THEY ARE THE SAME");
 			} else {
 			    sendingSameOffer = false;
