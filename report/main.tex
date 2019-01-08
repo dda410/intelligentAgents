@@ -1,0 +1,274 @@
+% This is samplepaper.tex, a sample chapter demonstrating the
+% LLNCS macro package for Springer Computer Science proceedings;
+% Version 2.20 of 2017/10/04
+%
+\documentclass[runningheads]{llncs}
+%
+\usepackage{graphicx}
+\usepackage[toc,page]{appendix}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{float}
+\lstset{
+  basicstyle=\ttfamily,
+  columns=fullflexible,
+%  frame=single,
+  breaklines=true,
+}
+
+% Used for displaying a sample figure. If possible, figure files should
+% be included in EPS format.
+%
+% If you use the hyperref package, please uncomment the following line
+% to display URLs in blue roman font according to Springer's eBook style:
+% \renewcommand\UrlFont{\color{blue}\rmfamily}
+
+\begin{document}
+%
+\title{Intelligent Agents}
+%
+%\titlerunning{Abbreviated paper title}
+% If the paper title is too long for the running head, you can set
+% an abbreviated paper title here
+%
+\author{Dimitri Diomaiuta (30598109) - Group 9}
+%
+% \authorrunning{F. Author et al.}
+% First names are abbreviated in the running head.
+% If there are more than two authors, 'et al.' is used.
+%
+\institute{University of Southampton}
+%% \institute{Princeton University, Princeton NJ 08544, USA \and
+%% Springer Heidelberg, Tiergartenstr. 17, 69121 Heidelberg, Germany
+%% \email{lncs@springer.com}\\
+%% \url{http://www.springer.com/gp/computer-science/lncs} \and
+%% ABC Institute, Rupert-Karls-University Heidelberg, Heidelberg, Germany\\
+%% \email{\{abc,lncs\}@uni-heidelberg.de}}
+%
+\maketitle              % typeset the header of the contribution
+%
+\begin{abstract}
+In this paper we analyze the design and implementation of a
+negotiation agent built on the \textit{GENIUS} framework \cite{genius}.
+\end{abstract}
+%
+%
+%
+
+\section{Design}
+In this section we explain the design choices we made in constructing
+our agent. As per this year ANAC competition \cite{anac}, the agent
+has to be designed to work with uncertainty and discrete values. In
+the following subsections we explain the different aspects of our
+design.
+
+\subsection{Uncertainty}
+When an agent works with uncertainty it means that does not have full
+knowledge of its utility space. Instead, the agent has a list of bids
+sorted from the worst to the best one. It is fundamental to know our
+utility space in order to be able to bid on the preferred items and
+obtain a successful negotiation result. To solve this issue, we designed
+our agent to model its utility space by analyzing the order of the
+preferred bids.
+
+\subsection{Concession strategy}\label{concession_strategy}
+A concession strategy is needed in order to reach an agreement with
+the opponent. The idea is that if both agents start bidding their best
+options there is a high chance that an agreement is never found
+if they do not renounce to maximizing their utility. A concession
+strategy is all about renouncing to maximize our utility and, hence,
+offer bids that are not at the top of our agent's list. We opted for a time dependent concession
+strategy. This means that our agent starts conceding more as time
+passes. We can see the mathematical notation of what we have just
+described at \ref{conc}.
+\begin{equation}\label{conc}
+  utility = 1 - time^{1/\beta}
+\end{equation}
+Figure \ref{figconc} represents the different concession strategy based
+on different $\beta$ value.
+\begin{figure}
+\includegraphics[width=\textwidth]{./img/boul2.png}
+\caption{Different $\beta$ values for the concession strategy. Utility
+at x-axis and time at y-axis.} \label{figconc}
+\end{figure}
+We designed our agent to play a Boulware concession strategy with
+$\beta = 0.3$. As we can observe from figure \ref{figconc} we can see
+that this strategy provides the flexibility of utility slow descent
+until reaching a low enough utility to find an agreement. 
+
+\subsection{Opponent modelling}\label{opmod}
+Another important feature of our strategy is opponent modelling. The
+breakthrough of this idea is that if our agent knows what the opponent
+wants we can find a bidding that maximizes both agents utility
+and, hence, have an higher probability to be closer to both the
+Pareto frontier and the Nash point. We apply this technique by
+exploiting the Johnny Black strategy \cite{black}. The main idea is
+that the options the opponent bids the most are also a good measure of
+the opponent's preferences. In order to model these preferences we
+construct a frequency table where we store the opponent's bidding
+history. Every time our agent receives an offer, the frequency
+table is updated. When the agent gathers enough information about the
+opponent, it updates its 
+model by first ordering the options of the issues following
+equation \ref{gd}. $k$ is the number of possible options for the
+given issue and $n_o$ the rank of the current option $o$.
+\begin{equation}\label{gd}
+  V_0 = \frac{k - n_0 + 1}{k}
+\end{equation}
+The weights of the issues are then given by equation \ref{dd}. $f_o$ and $t$ represent respectively the frequency of option $o$ and
+the total number of opponent's previous bids.
+\begin{equation}\label{dd}
+  \hat{w_i} = \sum_{o \in O_i} \frac{f_o^2}{t^2}
+\end{equation}
+The issues weights are then normalized following equation \ref{norm}.
+\begin{equation}\label{norm}
+w_i = \frac{\hat{w_i}}{\sum_{j \in I} \hat{w_j}}
+\end{equation}
+
+\subsection{Offer strategy}
+Our agent's offer strategy is based on the opponent modelling and on
+the concession strategy. The utility space is searched in order to
+find all the bids within a utility range. The upper bound is $1$, the
+maximum possible utility, while the lower bound is given by the result
+of the concession strategy equation \ref{conc}. The estimation of the
+opponent utility is described in \ref{opmod}. From all the obtained
+bids we offer to the opponent the one that has the best joint utility for
+our agent and for the opponent as well, see equation \ref{joint}.
+\begin{equation}\label{joint}
+  joint_{utility} = agent_{utility} * opponent_{utility}
+\end{equation}
+This strategy allows our agent to offer bids that are close to the
+Pareto frontier and to the Nash point. 
+
+\subsection{Acceptance strategy}
+Our agent's acceptance strategy is consistent with the offer one. We
+accept the opponent's offer if it meets one of the following
+requirements:
+\begin{itemize}
+\item The joint utility is bigger than our agent's last offer joint
+utility.
+\item Our agent utility is bigger than our agent's last offer utility.
+\end{itemize}
+This strategy allows to end the negotiation with a reasonable
+agreement, avoiding the utility descent caused by the concession
+strategy.
+
+\section{Results}\label{results}
+In this section we analyze the results of our Agent. The results have
+been gathered during the agents competition organized by the course
+\textit{Intelligent Agents (COMP6203)} of \textit{University of
+  Southampton}. In this competition all the implemented agents for the
+course have been tested against each other on three different domain
+sizes: small, medium and large. The metrics of evaluation were the
+agent's utility, distance to Nash point and agreement rate. We can see the results
+summarized in tables \ref{tab_agreement}, \ref{tab_utility} and
+\ref{tab_nash}, showing our agent, \textit{Agent 9}, and all other
+agents outcome.
+\begin{table}[H]
+\caption{The agreement rate results.}\label{tab_agreement}
+\begin{tabular}{|l|r|r|r|}
+\hline
+\textbf{Agents}~~~ & \textbf{Small Domain}~~~ &
+\textbf{Medium Domain}~~~ & \textbf{Large Domain}~~~\\
+\hline
+Agent 9 & 96.39\% & 59.36\% & 71.98\% \\
+\hline
+All agents & 95.49\% & 72.25\% & 82.07\% \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\caption{The average utility results.}\label{tab_utility}
+\begin{tabular}{|l|r|r|r|}
+\hline
+\textbf{Agents}~~~ & \textbf{Small Domain}~~~ &
+\textbf{Medium Domain}~~~ & \textbf{Large Domain}~~~\\
+\hline
+Agent 9 & 0.946 & 0.661 & 0.791 \\
+\hline
+All agents & 0.685 & 0.648 & 0.654 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\caption{The average distance to Nash point results.}\label{tab_nash}
+\begin{tabular}{|l|r|r|r|}
+\hline
+\textbf{Agents}~~~ & \textbf{Small Domain}~~~ &
+\textbf{Medium Domain}~~~ & \textbf{Large Domain}~~~\\
+\hline
+Agent 9 & 0.070 & 0.510 & 0.334 \\
+\hline
+All agents & 0.147 & 0.763 & 0.552 \\
+\hline
+\end{tabular}
+\end{table}
+
+We can observe that, regarding the agreement rate (see table \ref{tab_agreement}), our agent
+performs well for the small domains but below average
+in the medium and and large domains. This is probably because our
+agent's Boulware strategy is too strong. Having a strong time
+dependent concession strategy, as
+described in subsection \ref{concession_strategy}, causes a slow
+utility descent. In medium and large domains the increased number of
+possible bids requires a less strong concession strategy that
+facilitates utility descent and, hence, the possibility to find an
+agreement with the opponent.
+
+The average utility data, see table \ref{tab_utility}, suggest that
+our agent's strong ability is indeed finding an agreement with an high
+utility. In all the three domains our agent performs better than the
+average of the other agents. We can also observe that it performs
+extremely well for the small domains and that the average utility is
+always bigger than 0.5.
+
+Our agent, with respect to the distance to Nash point (see table
+\ref{tab_nash}), performs better than the average of the other
+agents. The results, though, are not entirely satisfactory for the
+medium and large size domains. An average Nash point of $0.510$ and
+$0.334$ means that the possible offer bids have not been adequately
+searched and that the last proposed offer, or the accepted one, was
+mistakenly recognized as acceptable.
+
+We can see, throughout all the data, a general pattern in our agent's
+behaviour. It performs incredibly well on small domains and, in
+contrast, more poorly on medium and large domains. This is not only
+dependent on the concession strategy but on the opponent modelling as
+well. In medium and large domains, in fact, the utility space is much
+bigger and the Johnny Black opponent modelling, see section
+\ref{opmod}, fails in producing an accurate model. A weak
+knowledge of opponents preferences causes the agent to bid or accept
+offers that are interpreted with wrong joint probability results (see
+\ref{joint}).
+
+\section{Conclusion}
+In this paper we have addressed the design of an intelligent agent
+based on the \textit{GENIUS} framework \cite{genius}. We have analyzed
+our agent's behaviour regarding the agreement rate, average utility and
+average distance to Nash point metrics (section \ref{results}). We have
+also observed, given the results data, some limitations of our
+design. In order to improve our agent, future work should consider implementing
+an adaptive concession strategy based on the domain size and a better
+opponent modelling for medium and large domains.
+
+
+\begin{thebibliography}{8}
+
+\bibitem{genius}
+Ii.tudelft.nl. (2019). Genius. [online] Available at:
+http://ii.tudelft.nl/genius/ [Accessed 2 Jan. 2019].
+  
+\bibitem{anac}
+Mmi.tudelft.nl. (2019). Automated Negotiating Agents Competition
+(ANAC) - Negotiation. [online] Available at:
+\url{http://mmi.tudelft.nl/negotiation/index.php/Automated\_Negotiating\_Agents\_Competition\_(ANAC)}
+    [Accessed 2 Jan. 2019].
+
+\bibitem{black}
+Yucel, O., Hoffman, J. and Sen, S., 2017. Jonny Black: A Mediating Approach to Multilateral Negotiations. In Modern Approaches to Agent-based Complex Automated Negotiation (pp. 231-238). Springer, Cham.
+
+\end{thebibliography}
+
+\end{document}
