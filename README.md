@@ -20,5 +20,5 @@ The repository is structured as follows:
   - [submissionFolder/group9/Agent9.java](https://github.com/dda410/intelligentAgents/blob/master/submissionFolder/group9/Agent9.java): the final implementation of
     the agent.
   - [submissionFolder/genius-9.1.5.jar](https://github.com/dda410/intelligentAgents/blob/master/submissionFolder/genius-9.1.5.jar):
-    the genius framework jar compatible with the designed agent.
+    the GENIUS framework jar compatible with the designed agent.
   
