@@ -39,12 +39,8 @@ public class Agent9 extends AbstractNegotiationParty {
     private Bid myLastOffer;
     private HashMap<String, HashMap> issuesMap = new HashMap<>();
     private AdditiveUtilitySpace opponentsAdditiveUtilitySpace;
-    //    private BidHistory bidHistoryOppHisUtility = new BidHistory();
-    //    private BidHistory bidHistoryOppOurUtility = new BidHistory();
-    //    private List<Bid> bidOrder;
     private static final int UPDATE_THREESHOLD = 10;
     private int offers_counter = 0;
-    //    private AdditiveUtilitySpace additiveUtilitySpace2;
     private double psi = 0.3;  // psi < 1 -> boulware; psi > 1 -> conceader; psi == 1 -> linear;
     private boolean sendingSameOffer = false;
     private double delta;
@@ -58,9 +54,7 @@ public class Agent9 extends AbstractNegotiationParty {
 	    AdditiveUtilitySpaceFactory factory = new AdditiveUtilitySpaceFactory(domain);
 	    factory.estimateUsingBidRanks(userModel.getBidRanking());
 	    AdditiveUtilitySpace additiveUtilitySpace = factory.getUtilitySpace();
-	    //        additiveUtilitySpace2 = additiveUtilitySpace;
 	    opponentsAdditiveUtilitySpace = (AdditiveUtilitySpace) additiveUtilitySpace.copy();
-	    //        bidOrder = userModel.getBidRanking().getBidOrder();
 	    List<Issue> issues = additiveUtilitySpace.getDomain().getIssues();
 	    for (Issue issue : issues) {
 		// Assuming that issues are discrete only
@@ -204,21 +198,8 @@ public class Agent9 extends AbstractNegotiationParty {
 			opponentsAdditiveUtilitySpace.addEvaluator(issue, ed);
 		    }
 		}
-		//            bidHistoryOppHisUtility.add(new BidDetails(lastReceivedOffer, opponentsAdditiveUtilitySpace.getUtility(lastReceivedOffer)));
-		//            bidHistoryOppOurUtility.add(new BidDetails(lastReceivedOffer, getUtility(lastReceivedOffer)));
 		if(offers_counter >= UPDATE_THREESHOLD) {
 		    opponentsAdditiveUtilitySpace.normalizeWeights();
-		    //                Bid bid = bidHistoryOppHisUtility.getHistory().get(bidHistoryOppHisUtility.size() - UPDATE_THREESHOLD - 1).getBid();
-		    //                for (int i = bidHistoryOppHisUtility.size() - UPDATE_THREESHOLD; i < bidHistoryOppHisUtility.size(); i++) {
-		    //                    if(bid.equals(bidHistoryOppHisUtility.getHistory().get(i).getBid())) {
-		    //                        sendingSameOffer = false;
-		    //                        System.out.println("THEY ARE THE SAME");
-		    //                    } else {
-		    //                        sendingSameOffer = false;
-		    //                        System.out.println("THEY ARE NOT THE SAME");
-		    //                        break;
-		    //                    }
-		    //                }
 		    offers_counter = 0;
 		} else {
 		    offers_counter += 1;
